@@ -1,0 +1,8 @@
+{
+  "name": "NAK Entre Rios - Muay Thai",
+  "description": "Site oficial da academia NAK Entre Rios com história do Muay Thai, informações da academia, eventos, equipe e matrícula de alunos integrada ao Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

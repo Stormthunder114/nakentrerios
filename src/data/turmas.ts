@@ -1,0 +1,48 @@
+import type { TurmaDetail } from '../types';
+
+export const TURMAS_DISPONIVEIS: TurmaDetail[] = [
+  {
+    id: 'Manhã - 07:00',
+    titulo: 'Turma da Manhã',
+    horario: '07:00 às 08:15',
+    publico: 'Todos os níveis (Iniciante ao Avançado)',
+    intensidade: 'Alta',
+    descricao: 'Comece seu dia com energia máxima! Treino focado em condicionamento aeróbico, técnica de clinch e combinações de socos e chutes.',
+    dias: 'Segunda, Quarta e Sexta',
+    vagasRestantes: 5,
+    destaque: false,
+  },
+  {
+    id: 'Noite - 19:30',
+    titulo: 'Turma da Noite',
+    horario: '19:30 às 20:45',
+    publico: 'Jovens e Adultos (Geral)',
+    intensidade: 'Alta',
+    descricao: 'A turma mais tradicional! Alivie o estresse diário com treino de saco pesado, manoplas tailandesas (paos) e sparring técnico supervisionado.',
+    dias: 'Segunda a Quinta-feira',
+    vagasRestantes: 3,
+    destaque: true,
+  },
+  {
+    id: 'Feminino - 18:30',
+    titulo: 'Turma Feminina',
+    horario: '18:30 às 19:30',
+    publico: 'Mulheres de todas as idades',
+    intensidade: 'Moderada',
+    descricao: 'Ambiente acolhedor e motivador com foco em defesa pessoal, tonificação muscular, flexibilidade e alta queima de calorias.',
+    dias: 'Terça e Quinta-feira',
+    vagasRestantes: 6,
+    destaque: false,
+  },
+  {
+    id: 'Kids - 17:30',
+    titulo: 'Turma Kids (Infantil)',
+    horario: '17:30 às 18:25',
+    publico: 'Crianças de 6 a 13 anos',
+    intensidade: 'Educativa',
+    descricao: 'Desenvolvimento psicomotor, respeito às regras, disciplina marcial e autoconfiança através de jogos lúdicos e técnicas seguras.',
+    dias: 'Terça e Quinta-feira',
+    vagasRestantes: 4,
+    destaque: false,
+  },
+];

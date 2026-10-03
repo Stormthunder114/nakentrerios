@@ -1,0 +1,22 @@
+[
+  {
+    "id": "nak_seed_01",
+    "nome": "Lucas Martins",
+    "telefone": "(42) 99876-5432",
+    "turma": "Noite - 19:30",
+    "prajed": "Branco (Iniciante)",
+    "origem": "Site Oficial NAK Entre Rios",
+    "status": "confirmado",
+    "criado_em": "2026-09-20T14:30:00.000Z"
+  },
+  {
+    "id": "nak_seed_02",
+    "nome": "Mariana Souza",
+    "telefone": "(42) 99123-4567",
+    "turma": "Feminino - 18:30",
+    "prajed": "Branco (Iniciante)",
+    "origem": "Site Oficial NAK Entre Rios",
+    "status": "confirmado",
+    "criado_em": "2026-09-21T09:15:00.000Z"
+  }
+]
