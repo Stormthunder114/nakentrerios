@@ -3,12 +3,14 @@ import { NakLogo } from './components/NakLogo';
 import { MatriculaModal } from './components/MatriculaModal';
 import { PortfolioFaixa } from './components/PortfolioFaixa';
 import { HistoriaMuayThai } from './components/HistoriaMuayThai';
+import { GaleriaFotos } from './components/GaleriaFotos';
 import type { TurmaId, Aluno } from './types';
 import { 
   ArrowRight,
   MessageCircle,
   ShieldCheck,
-  Award
+  Award,
+  Camera
 } from 'lucide-react';
 
 export default function App() {
@@ -55,9 +57,20 @@ export default function App() {
           </span>
         </div>
 
-        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-700 font-medium shadow-sm">
-          <Award className="w-3.5 h-3.5 text-red-600 shrink-0" />
-          <span>Distrito de Entre Rios • Guarapuava - PR</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <a
+            href="#secaoGaleria"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-800 font-semibold shadow-sm transition hover:scale-105 active:scale-95"
+          >
+            <Camera className="w-3.5 h-3.5 text-red-600" />
+            <span>Fotos & Aulas</span>
+          </a>
+
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-700 font-medium shadow-sm">
+            <Award className="w-3.5 h-3.5 text-red-600 shrink-0" />
+            <span className="hidden xs:inline">Distrito de Entre Rios • Guarapuava - PR</span>
+            <span className="inline xs:hidden">Entre Rios - PR</span>
+          </div>
         </div>
       </header>
 
@@ -127,10 +140,23 @@ export default function App() {
       {/* Seção de Portfólio Visual / Esteira Contínua de Imagens */}
       <PortfolioFaixa />
 
+      {/* Componente de Galeria de Fotos Oficial com Efeito Lightbox */}
+      <GaleriaFotos onMatriculaClick={() => setIsMatriculaModalOpen(true)} />
+
       {/* Footer Minimalista Neutro */}
-      <footer className="relative z-10 w-full px-4 sm:px-6 py-4 sm:py-6 border-t border-zinc-200 text-center text-[11px] sm:text-xs text-zinc-500 font-medium">
+      <footer className="relative z-10 w-full px-4 sm:px-6 py-6 border-t border-zinc-200 text-center text-[11px] sm:text-xs text-zinc-500 font-medium space-y-2">
         <p>
           © 2026 NAK Entre Rios • Muay Thai em Entre Rios, Guarapuava - PR • Prof. Jonatas Ramos
+        </p>
+        <p>
+          <a
+            href="https://nakentrerios.online"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-zinc-600 hover:text-zinc-950 font-semibold transition"
+          >
+            nakentrerios.online
+          </a>
         </p>
       </footer>
 

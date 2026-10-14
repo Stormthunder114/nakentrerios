@@ -66,9 +66,9 @@ export const Footer: React.FC = () => {
 
       <div className="max-w-6xl mx-auto mt-10 pt-6 border-t border-zinc-900 flex flex-col sm:flex-row items-center justify-between text-[11px] text-zinc-500 gap-3">
         <p>© {new Date().getFullYear()} NAK Entre Rios • Muay Thai Oficial. Todos os direitos reservados.</p>
-        <p className="flex items-center gap-1 text-zinc-400 font-mono">
-          Supabase Integrado • Tabela: alunos
-        </p>
+        <span className="text-zinc-400 font-medium">
+          Entre Rios • Guarapuava - PR
+        </span>
       </div>
     </footer>
   );

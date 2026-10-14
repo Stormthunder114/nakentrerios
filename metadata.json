@@ -1,6 +1,6 @@
 {
   "name": "NAK Entre Rios - Muay Thai",
-  "description": "Site oficial da academia NAK Entre Rios com história do Muay Thai, informações da academia, eventos, equipe e matrícula de alunos integrada ao Supabase.",
+  "description": "Site oficial do Centro de Treinamento NAK Entre Rios. Aulas de Muay Thai com Professor Jonatas Ramos, turmas feminina, kids e adultos, e matrículas abertas.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
