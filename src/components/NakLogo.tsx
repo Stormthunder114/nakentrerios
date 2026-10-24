@@ -4,6 +4,9 @@ interface NakLogoProps {
   className?: string;
   size?: number;
   showText?: boolean;
+  onClick?: () => void;
+  clickable?: boolean;
+  title?: string;
 }
 
 // Imagem oficial da NAK Entre Rios fornecida pelo usuário
@@ -13,15 +16,34 @@ export const NakLogo: React.FC<NakLogoProps> = ({
   className = '',
   size = 56,
   showText = false,
+  onClick,
+  clickable = false,
+  title,
 }) => {
   const [hasError, setHasError] = useState(false);
 
+  const isInteractive = clickable || Boolean(onClick);
+
   return (
-    <div className={`inline-flex items-center gap-3 ${className}`}>
+    <div 
+      onClick={onClick}
+      role={isInteractive ? 'button' : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      title={title || (isInteractive ? 'NAK Entre Rios' : undefined)}
+      onKeyDown={(e) => {
+        if (isInteractive && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
+      className={`inline-flex items-center gap-3 ${isInteractive ? 'cursor-pointer select-none group' : ''} ${className}`}
+    >
       {!hasError ? (
         <div
           style={{ width: size, height: size }}
-          className="shrink-0 rounded-full overflow-hidden border-2 border-zinc-300 shadow-xl shadow-zinc-400/30 bg-white flex items-center justify-center transition-transform hover:scale-105"
+          className={`shrink-0 rounded-full overflow-hidden border-2 border-zinc-300 shadow-xl shadow-zinc-400/30 bg-white flex items-center justify-center transition-all duration-300 ${
+            isInteractive ? 'group-hover:scale-105 group-hover:border-red-600 group-hover:shadow-red-500/20 group-active:scale-95' : 'hover:scale-105'
+          }`}
         >
           <img
             src={NAK_LOGO_IMAGE_URL}

@@ -51,3 +51,25 @@ export async function deleteDbAluno(id: number) {
     throw new Error('Database delete failed. Please try again later.', { cause: error });
   }
 }
+
+export async function updateDbAluno(id: number, data: Partial<CreateAlunoInput & { status?: string }>) {
+  try {
+    const updatePayload: Record<string, any> = {};
+    if (data.nome) updatePayload.nome = data.nome.trim();
+    if (data.telefone) updatePayload.telefone = data.telefone.trim();
+    if (data.turma) updatePayload.turma = data.turma.trim();
+    if (data.prajed) updatePayload.prajed = data.prajed;
+    if (data.status) updatePayload.status = data.status;
+
+    const result = await db
+      .update(alunos)
+      .set(updatePayload)
+      .where(eq(alunos.id, id))
+      .returning();
+    return result[0];
+  } catch (error) {
+    console.error('Database updateDbAluno failed:', error);
+    throw new Error('Database update failed. Please try again later.', { cause: error });
+  }
+}
+

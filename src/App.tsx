@@ -4,7 +4,7 @@ import { MatriculaModal } from './components/MatriculaModal';
 import { PortfolioFaixa } from './components/PortfolioFaixa';
 import { HistoriaMuayThai } from './components/HistoriaMuayThai';
 import { GaleriaFotos } from './components/GaleriaFotos';
-import { DownloadCloudflareModal } from './components/DownloadCloudflareModal';
+import { PainelGestaoAlunos } from './components/PainelGestaoAlunos';
 import type { TurmaId, Aluno } from './types';
 import { useAuth } from './lib/AuthContext.tsx';
 import { 
@@ -14,16 +14,14 @@ import {
   Award,
   Camera,
   LogIn,
-  LogOut,
-  User as UserIcon,
-  Download
+  LogOut
 } from 'lucide-react';
 
 export default function App() {
   const { user, signInWithGoogle, signOut } = useAuth();
+  const [currentView, setCurrentView] = useState<'landing' | 'gestao'>('landing');
   const [selectedTurma, setSelectedTurma] = useState<TurmaId>('Manhã - 07:00');
   const [isMatriculaModalOpen, setIsMatriculaModalOpen] = useState(false);
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [ultimoMatriculado, setUltimoMatriculado] = useState<Aluno | null>(null);
 
   const handleMatriculaSucesso = (novoAluno: { nome: string; telefone: string; turma: string }) => {
@@ -35,6 +33,11 @@ export default function App() {
     };
     setUltimoMatriculado(matricula);
   };
+
+  // Se a visão de Gestão estiver ativa, exibe o Painel de Gestão Completo
+  if (currentView === 'gestao') {
+    return <PainelGestaoAlunos onVoltarAoSite={() => setCurrentView('landing')} />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 text-zinc-900 flex flex-col justify-between font-sans selection:bg-red-600 selection:text-white relative overflow-x-hidden">
@@ -58,24 +61,18 @@ export default function App() {
 
       {/* Top Bar Responsiva: Celular e Computador */}
       <header className="relative z-10 w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col sm:flex-row items-center justify-between gap-3 max-w-6xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <NakLogo size={42} />
-          <span className="font-['Teko'] text-2xl sm:text-3xl uppercase tracking-wider font-bold leading-none">
+        <div 
+          onClick={() => setCurrentView('gestao')}
+          className="flex items-center gap-2.5 cursor-pointer group select-none"
+          title="NAK Entre Rios"
+        >
+          <NakLogo size={42} clickable title="NAK Entre Rios" />
+          <span className="font-['Teko'] text-2xl sm:text-3xl uppercase tracking-wider font-bold leading-none group-hover:opacity-90 transition">
             <span className="text-red-600">NAK</span> <span className="text-black">Entre Rios</span>
           </span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={() => setIsDownloadModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-[11px] sm:text-xs font-semibold shadow-sm transition hover:scale-105 active:scale-95 cursor-pointer"
-            title="Baixar arquivos para atualizar o site no Cloudflare"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Baixar Atualização</span>
-          </button>
-
           <a
             href="#secaoGaleria"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-800 font-semibold shadow-sm transition hover:scale-105 active:scale-95"
@@ -132,10 +129,14 @@ export default function App() {
       <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-3 sm:px-6 py-6 sm:py-12 text-center max-w-4xl mx-auto my-auto w-full">
         <div className="w-full space-y-6 sm:space-y-8 animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center">
           
-          {/* Official Emblem */}
-          <div className="relative group">
-            <div className="absolute -inset-2 bg-zinc-300 rounded-full blur-xl opacity-40 group-hover:opacity-70 transition duration-500" />
-            <NakLogo size={120} className="relative shadow-xl shadow-zinc-300/80 transition-transform duration-300 group-hover:scale-105" />
+          {/* Emblema Oficial com acesso secreto à Gestão de Alunos ao clicar */}
+          <div 
+            onClick={() => setCurrentView('gestao')}
+            className="relative group cursor-pointer select-none"
+            title="NAK Entre Rios"
+          >
+            <div className="absolute -inset-3 bg-red-600/25 rounded-full blur-xl opacity-40 group-hover:opacity-80 transition duration-500" />
+            <NakLogo size={120} clickable className="relative shadow-xl shadow-zinc-300/80 transition-transform duration-300 group-hover:scale-105" title="NAK Entre Rios" />
           </div>
 
           {/* Titles & Identity: NAK Vermelho & ENTRE RIOS Preto */}
@@ -144,6 +145,7 @@ export default function App() {
               <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
               <span>Centro de Treinamento Oficial</span>
             </div>
+
 
             <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black uppercase font-['Teko'] tracking-tight leading-none break-words">
               <span className="text-red-600">NAK</span>{' '}
@@ -211,15 +213,6 @@ export default function App() {
           >
             nakentrerios.online
           </a>
-          <span className="text-zinc-300">•</span>
-          <button
-            type="button"
-            onClick={() => setIsDownloadModalOpen(true)}
-            className="inline-flex items-center gap-1.5 text-red-600 hover:text-red-700 font-semibold transition cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Baixar Arquivos para Cloudflare (.ZIP)</span>
-          </button>
         </div>
       </footer>
 
@@ -232,11 +225,6 @@ export default function App() {
         onMatriculaSucesso={handleMatriculaSucesso}
       />
 
-      {/* Modal para Baixar o Site Atualizado e Instruções do Cloudflare */}
-      <DownloadCloudflareModal
-        isOpen={isDownloadModalOpen}
-        onClose={() => setIsDownloadModalOpen(false)}
-      />
 
       {/* Botão Flutuante do WhatsApp Responsivo */}
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-30">
