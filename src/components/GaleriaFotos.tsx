@@ -141,10 +141,16 @@ export const FOTOS_GALERIA: FotoGaleria[] = [
 ];
 
 interface GaleriaFotosProps {
+  isOpen?: boolean;
+  onClose?: () => void;
   onMatriculaClick?: () => void;
 }
 
-export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) => {
+export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ 
+  isOpen = true,
+  onClose,
+  onMatriculaClick 
+}) => {
   const [categoriaAtiva, setCategoriaAtiva] = useState<CategoriaGaleria>('todas');
   const [fotoSelecionada, setFotoSelecionada] = useState<FotoGaleria | null>(null);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -169,22 +175,30 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
     setFotoSelecionada(fotosFiltradas[indiceAnterior]);
   }, [fotoSelecionada, fotosFiltradas]);
 
-  // Teclado (ESC, Esquerda, Direita)
+  // Teclado (ESC fecha lightbox ou fecha o modal da galeria)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
+        if (fotoSelecionada) {
+          setFotoSelecionada(null);
+        } else if (onClose) {
+          onClose();
+        }
+        return;
+      }
       if (!fotoSelecionada) return;
-      if (e.key === 'Escape') setFotoSelecionada(null);
       if (e.key === 'ArrowRight') handleProxima();
       if (e.key === 'ArrowLeft') handleAnterior();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [fotoSelecionada, handleProxima, handleAnterior]);
+  }, [isOpen, fotoSelecionada, onClose, handleProxima, handleAnterior]);
 
-  // Bloqueio do scroll da página quando Lightbox está aberto
+  // Bloqueio do scroll da página quando Modal da galeria está aberto
   useEffect(() => {
-    if (fotoSelecionada) {
+    if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -192,7 +206,7 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [fotoSelecionada]);
+  }, [isOpen]);
 
   // Touch Swipe para celular no lightbox
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -212,36 +226,49 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
     setTouchStart(null);
   };
 
+  if (!isOpen) return null;
+
   const indiceFotoAtual = fotoSelecionada 
     ? fotosFiltradas.findIndex((f) => f.id === fotoSelecionada.id) + 1 
     : 0;
 
   return (
-    <section id="secaoGaleria" className="w-full py-12 sm:py-16 px-4 sm:px-6 max-w-6xl mx-auto scroll-mt-20">
-      {/* Cabeçalho da Seção */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-10 pb-6 border-b border-zinc-200">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">
-            <Camera className="w-4 h-4 text-red-600" />
-            <span>Galeria Oficial · CT NAK Entre Rios</span>
+    <div 
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-between overflow-hidden animate-in fade-in duration-200 select-none"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Fotos & Aulas - CT NAK Entre Rios"
+    >
+      {/* Barra Superior do Modal com Título, Filtros e Botão Fechar */}
+      <header className="w-full bg-zinc-950 border-b border-zinc-800 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4 z-20 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-red-600/20 text-red-500 border border-red-600/30 flex items-center justify-center shrink-0">
+            <Camera className="w-5 h-5" />
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase font-['Teko'] tracking-tight text-zinc-950 leading-none">
-            Aulas, Competições & <span className="text-red-600">Espaço do CT</span>
-          </h2>
-          <p className="text-xs sm:text-sm text-zinc-600 mt-2 max-w-xl">
-            Veja como é o dia a dia nos treinos, a estrutura dos tatames, as conquistas no ringue e as cerimônias de graduação de Prajied.
-          </p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-white font-['Teko'] text-2xl sm:text-3xl font-bold uppercase tracking-wide leading-none">
+                Fotos & Aulas
+              </h2>
+              <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-red-600/20 border border-red-600/30 text-red-400 text-[10px] font-bold uppercase tracking-wider">
+                CT Oficial NAK
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-zinc-400 truncate hidden xs:block">
+              Aulas, competições, cerimônias de graduação e estrutura
+            </p>
+          </div>
         </div>
 
-        {/* Controles de Filtro Segmentados */}
-        <div className="flex flex-wrap items-center gap-1.5 p-1 bg-zinc-200/80 rounded-xl border border-zinc-300 self-start md:self-auto">
+        {/* Controles de Filtro Desktop */}
+        <div className="hidden lg:flex items-center gap-1.5 p-1 bg-zinc-900 rounded-xl border border-zinc-800">
           <button
             type="button"
             onClick={() => setCategoriaAtiva('todas')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
               categoriaAtiva === 'todas'
-                ? 'bg-zinc-950 text-white shadow-sm'
-                : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-300/60'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -253,8 +280,8 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
             onClick={() => setCategoriaAtiva('aulas')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
               categoriaAtiva === 'aulas'
-                ? 'bg-zinc-950 text-white shadow-sm'
-                : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-300/60'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
             <Swords className="w-3.5 h-3.5" />
@@ -266,8 +293,8 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
             onClick={() => setCategoriaAtiva('competicoes')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
               categoriaAtiva === 'competicoes'
-                ? 'bg-zinc-950 text-white shadow-sm'
-                : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-300/60'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
             <Trophy className="w-3.5 h-3.5" />
@@ -279,8 +306,8 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
             onClick={() => setCategoriaAtiva('espaco')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
               categoriaAtiva === 'espaco'
-                ? 'bg-zinc-950 text-white shadow-sm'
-                : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-300/60'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
             <Building className="w-3.5 h-3.5" />
@@ -292,70 +319,154 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
             onClick={() => setCategoriaAtiva('graduacoes')}
             className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
               categoriaAtiva === 'graduacoes'
-                ? 'bg-zinc-950 text-white shadow-sm'
-                : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-300/60'
+                ? 'bg-red-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
             }`}
           >
             <GraduationCap className="w-3.5 h-3.5" />
             <span>Graduações</span>
           </button>
         </div>
+
+        {/* Botão Fechar Modal */}
+        <div className="flex items-center gap-2 shrink-0">
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold border border-zinc-700 transition cursor-pointer active:scale-95 shadow-sm"
+              title="Fechar galeria (Esc)"
+            >
+              <X className="w-4 h-4 text-zinc-300" />
+              <span>Fechar</span>
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Barra de Filtros Mobile / Tablet */}
+      <div className="lg:hidden w-full bg-zinc-950 px-4 py-2 border-b border-zinc-800/80 overflow-x-auto flex items-center gap-1.5 shrink-0 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setCategoriaAtiva('todas')}
+          className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+            categoriaAtiva === 'todas'
+              ? 'bg-red-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-800 bg-zinc-900/60'
+          }`}
+        >
+          <Layers className="w-3 h-3" />
+          <span>Todas ({FOTOS_GALERIA.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoriaAtiva('aulas')}
+          className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+            categoriaAtiva === 'aulas'
+              ? 'bg-red-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-800 bg-zinc-900/60'
+          }`}
+        >
+          <Swords className="w-3 h-3" />
+          <span>Aulas</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoriaAtiva('competicoes')}
+          className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+            categoriaAtiva === 'competicoes'
+              ? 'bg-red-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-800 bg-zinc-900/60'
+          }`}
+        >
+          <Trophy className="w-3 h-3" />
+          <span>Competições</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoriaAtiva('espaco')}
+          className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+            categoriaAtiva === 'espaco'
+              ? 'bg-red-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-800 bg-zinc-900/60'
+          }`}
+        >
+          <Building className="w-3 h-3" />
+          <span>Espaço CT</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setCategoriaAtiva('graduacoes')}
+          className={`shrink-0 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+            categoriaAtiva === 'graduacoes'
+              ? 'bg-red-600 text-white shadow-sm'
+              : 'text-zinc-400 hover:text-white hover:bg-zinc-800 bg-zinc-900/60'
+          }`}
+        >
+          <GraduationCap className="w-3 h-3" />
+          <span>Graduações</span>
+        </button>
       </div>
 
-      {/* Grid de Fotos com Efeito Hover e Lightbox Trigger */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {fotosFiltradas.map((foto) => (
-          <div
-            key={foto.id}
-            onClick={() => setFotoSelecionada(foto)}
-            className={`group relative overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-300 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer aspect-4/3 ${foto.span || ''}`}
-          >
-            {/* Imagem com Zoom Suave ao passar o cursor */}
-            <img
-              src={foto.url}
-              alt={foto.titulo}
-              loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-            />
+      {/* Conteúdo com Scroll: Grid de Fotos */}
+      <main className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 w-full max-w-7xl mx-auto">
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-zinc-400 gap-1.5 px-1">
+          <span>Exibindo <strong>{fotosFiltradas.length}</strong> fotos do acervo NAK Entre Rios</span>
+          <span className="text-zinc-500">Clique em qualquer foto para ampliar em alta definição</span>
+        </div>
 
-            {/* Overlay Escuro com Informações */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-85 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 text-white">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider drop-shadow">
-                  {foto.categoriaLabel}
-                </span>
-                <span className="p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-zinc-300 group-hover:text-white transition">
-                  <Maximize2 className="w-4 h-4" />
-                </span>
-              </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-8">
+          {fotosFiltradas.map((foto) => (
+            <div
+              key={foto.id}
+              onClick={() => setFotoSelecionada(foto)}
+              className={`group relative overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer aspect-4/3 ${foto.span || ''}`}
+            >
+              {/* Imagem com Zoom Suave ao passar o cursor */}
+              <img
+                src={foto.url}
+                alt={foto.titulo}
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              />
 
-              <div>
-                <h3 className="font-bold text-sm sm:text-base leading-snug drop-shadow line-clamp-1 font-sans">
-                  {foto.titulo}
-                </h3>
-                {foto.detalhe && (
-                  <p className="text-[11px] text-zinc-300 line-clamp-1 mt-0.5">
-                    {foto.detalhe}
-                  </p>
-                )}
+              {/* Overlay Escuro com Informações */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-85 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider drop-shadow">
+                    {foto.categoriaLabel}
+                  </span>
+                  <span className="p-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-zinc-300 group-hover:text-white transition">
+                    <Maximize2 className="w-4 h-4" />
+                  </span>
+                </div>
+
+                <div>
+                  <h3 className="font-bold text-sm sm:text-base leading-snug drop-shadow line-clamp-1 font-sans">
+                    {foto.titulo}
+                  </h3>
+                  {foto.detalhe && (
+                    <p className="text-[11px] text-zinc-300 line-clamp-1 mt-0.5">
+                      {foto.detalhe}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Informação do Acervo */}
-      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-zinc-500 gap-2 px-1">
-        <span>Exibindo {fotosFiltradas.length} fotos do acervo NAK Entre Rios</span>
-        <span className="text-zinc-600">Clique em qualquer foto para abrir o visualizador em tela cheia</span>
-      </div>
+          ))}
+        </div>
+      </main>
 
       {/* =========================================================================
        * COMPONENTE LIGHTBOX / VISUALIZADOR EM TELA CHEIA
        * ========================================================================= */}
       {fotoSelecionada && (
         <div 
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between animate-in fade-in duration-200 select-none"
+          className="fixed inset-0 z-60 bg-black/95 backdrop-blur-md flex flex-col justify-between animate-in fade-in duration-200 select-none"
           role="dialog"
           aria-modal="true"
           aria-label={fotoSelecionada.titulo}
@@ -485,6 +596,6 @@ export const GaleriaFotos: React.FC<GaleriaFotosProps> = ({ onMatriculaClick }) 
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 };

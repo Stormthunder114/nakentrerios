@@ -22,6 +22,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<'landing' | 'gestao'>('landing');
   const [selectedTurma, setSelectedTurma] = useState<TurmaId>('Manhã - 07:00');
   const [isMatriculaModalOpen, setIsMatriculaModalOpen] = useState(false);
+  const [isGaleriaModalOpen, setIsGaleriaModalOpen] = useState(false);
   const [ultimoMatriculado, setUltimoMatriculado] = useState<Aluno | null>(null);
 
   const handleMatriculaSucesso = (novoAluno: { nome: string; telefone: string; turma: string }) => {
@@ -73,13 +74,15 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <a
-            href="#secaoGaleria"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-800 font-semibold shadow-sm transition hover:scale-105 active:scale-95"
+          <button
+            type="button"
+            onClick={() => setIsGaleriaModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-800 font-semibold shadow-sm transition hover:scale-105 active:scale-95 cursor-pointer"
+            title="Abrir Fotos & Aulas da NAK Entre Rios"
           >
             <Camera className="w-3.5 h-3.5 text-red-600" />
             <span>Fotos & Aulas</span>
-          </a>
+          </button>
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-700 font-medium shadow-sm">
             <Award className="w-3.5 h-3.5 text-red-600 shrink-0" />
@@ -193,9 +196,6 @@ export default function App() {
         </div>
       </main>
 
-      {/* Componente de Galeria de Fotos Oficial com Efeito Lightbox */}
-      <GaleriaFotos onMatriculaClick={() => setIsMatriculaModalOpen(true)} />
-
       {/* Seção de Portfólio Visual / Esteira Contínua de Imagens Rolando no Final da Página */}
       <PortfolioFaixa />
 
@@ -223,6 +223,16 @@ export default function App() {
         selectedTurma={selectedTurma}
         onTurmaChange={setSelectedTurma}
         onMatriculaSucesso={handleMatriculaSucesso}
+      />
+
+      {/* Modal de Fotos & Aulas acionado pelo botão no cabeçalho */}
+      <GaleriaFotos
+        isOpen={isGaleriaModalOpen}
+        onClose={() => setIsGaleriaModalOpen(false)}
+        onMatriculaClick={() => {
+          setIsGaleriaModalOpen(false);
+          setIsMatriculaModalOpen(true);
+        }}
       />
 
 
