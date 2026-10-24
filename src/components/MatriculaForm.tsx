@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { cadastrarAluno } from '../lib/supabase';
 import { CheckCircle2, AlertCircle, Loader2, MessageCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import type { TurmaId } from '../types';
+import { useAuth } from '../lib/AuthContext.tsx';
 
 interface MatriculaFormProps {
   selectedTurma: TurmaId;
@@ -14,8 +15,15 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
   onTurmaChange,
   onMatriculaSucesso,
 }) => {
-  const [nome, setNome] = useState('');
+  const { user } = useAuth();
+  const [nome, setNome] = useState(user?.displayName || '');
   const [telefone, setTelefone] = useState('');
+
+  useEffect(() => {
+    if (user?.displayName && !nome) {
+      setNome(user.displayName);
+    }
+  }, [user]);
   const [loading, setLoading] = useState(false);
   const [sucesso, setSucesso] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -57,6 +65,7 @@ export const MatriculaForm: React.FC<MatriculaFormProps> = ({
         turma: turmaInput,
         prajed: 'Branco (Iniciante)',
         origem: 'Site NAK Entre Rios',
+        userId: user?.uid,
       });
 
       if (!error) {

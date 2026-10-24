@@ -24,6 +24,7 @@ export async function cadastrarAluno(dados: {
   turma: string;
   prajed?: string;
   origem?: string;
+  userId?: string;
 }) {
   const payload: Record<string, any> = {
     nome: dados.nome.trim(),
@@ -31,6 +32,7 @@ export async function cadastrarAluno(dados: {
     turma: dados.turma,
     prajed: dados.prajed || 'Branco (Iniciante)',
     origem: dados.origem || 'Site NAK Entre Rios',
+    userId: dados.userId || null,
   };
 
   // 1. Tenta enviar via Backend Local Seguro (/api/alunos)

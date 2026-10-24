@@ -2,8 +2,10 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import dotenv from 'dotenv';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createServer as createViteServer } from 'vite';
+import { requireAuth, AuthRequest } from './src/middleware/auth.ts';
+import { getDbAlunos, insertDbAluno, deleteDbAluno } from './src/db/alunos.ts';
+import { getOrCreateUser } from './src/db/users.ts';
 
 dotenv.config();
 
@@ -24,7 +26,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// === ARMAZENAMENTO PERSISTENTE LOCAL (FALLBACK SEGURO) ===
+// Armazenamento local de redundância
 const DATA_DIR = path.join(process.cwd(), 'data');
 const ALUNOS_FILE = path.join(DATA_DIR, 'alunos.json');
 
@@ -57,35 +59,6 @@ function saveLocalAlunos(alunos: any[]): void {
   }
 }
 
-// === CONFIGURAÇÃO SUPABASE CONDICIONAL & SEGURA ===
-const rawSupabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseSecret = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '';
-
-// Evita tentar conectar a domínios inválidos/inexistentes conhecidos
-const isSupabaseConfigured = Boolean(
-  rawSupabaseUrl &&
-  !rawSupabaseUrl.includes('mrhyhamjjygysuynmmed.supabase.co') &&
-  supabaseSecret
-);
-
-let supabaseAdmin: SupabaseClient | null = null;
-if (isSupabaseConfigured) {
-  try {
-    supabaseAdmin = createClient(rawSupabaseUrl, supabaseSecret, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
-    console.log('[Supabase] Cliente administrativo configurado.');
-  } catch (err) {
-    console.warn('[Supabase] Não foi possível inicializar cliente:', err);
-    supabaseAdmin = null;
-  }
-} else {
-  console.log('[Sistema] Supabase externo não configurado ou offline. Utilizando banco local JSON persistente.');
-}
-
 // === ROTAS DA API ===
 
 // Health Check
@@ -93,44 +66,77 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    storage: isSupabaseConfigured ? 'supabase+local_fallback' : 'local_json',
-    supabaseActive: Boolean(supabaseAdmin),
   });
 });
 
-// Listar Alunos (Painel da Academia / Mestre)
-app.get('/api/alunos', async (req, res) => {
-  if (supabaseAdmin) {
-    try {
-      const { data, error } = await supabaseAdmin
-        .from('alunos')
-        .select('*')
-        .order('criado_em', { ascending: false });
+// Download do pacote completo para Cloudflare Pages
+app.get(['/api/download-zip', '/site-nak-atualizado.zip'], (req, res) => {
+  const zipPath = path.join(process.cwd(), 'public', 'site-nak-atualizado.zip');
+  if (fs.existsSync(zipPath)) {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="site-nak-atualizado.zip"');
+    return res.sendFile(zipPath);
+  }
+  return res.status(404).send('Arquivo zip não encontrado. Execute o build primeiro.');
+});
 
-      if (!error && Array.isArray(data)) {
-        return res.json({
-          alunos: data,
-          total: data.length,
-          origem: 'supabase',
-        });
-      }
-    } catch (supaErr) {
-      console.warn('[Supabase] Falha ao consultar Supabase, utilizando banco local:', supaErr);
+
+// Autenticação: Sincronizar usuário Firebase com PostgreSQL
+app.post('/api/auth/sync', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Não autenticado' });
     }
+    const { uid, email, name, picture } = req.user;
+    const dbUser = await getOrCreateUser(uid, email || '', name, picture);
+    return res.json({ user: dbUser });
+  } catch (error: any) {
+    console.error('Falha ao sincronizar usuário:', error);
+    return res.status(500).json({ error: 'Erro ao autenticar usuário' });
+  }
+});
+
+// Autenticação: Obter perfil atual
+app.get('/api/auth/me', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Não autenticado' });
+    }
+    const { uid, email, name, picture } = req.user;
+    const dbUser = await getOrCreateUser(uid, email || '', name, picture);
+    return res.json({ user: dbUser });
+  } catch (error: any) {
+    console.error('Falha ao obter usuário atual:', error);
+    return res.status(500).json({ error: 'Erro ao obter dados do usuário' });
+  }
+});
+
+// Listar Alunos (Cloud SQL com fallback local)
+app.get('/api/alunos', async (req, res) => {
+  try {
+    const sqlAlunos = await getDbAlunos();
+    if (Array.isArray(sqlAlunos) && sqlAlunos.length > 0) {
+      return res.json({
+        alunos: sqlAlunos,
+        total: sqlAlunos.length,
+      });
+    }
+  } catch (dbErr) {
+    console.error('Falha ao consultar banco Cloud SQL:', dbErr);
   }
 
+  // Fallback para arquivo local se banco estiver em inicialização ou vazio
   const localAlunos = getLocalAlunos();
   return res.json({
     alunos: localAlunos,
     total: localAlunos.length,
-    origem: 'local',
   });
 });
 
-// Criar Matrícula (Salvamento seguro e resiliente)
+// Criar Matrícula (Cloud SQL + persistência segura)
 app.post('/api/alunos', async (req, res) => {
   try {
-    const { nome, telefone, turma, prajed, origem } = req.body;
+    const { nome, telefone, turma, prajed, origem, userId } = req.body;
 
     if (!nome || !telefone || !turma) {
       return res.status(400).json({
@@ -138,51 +144,45 @@ app.post('/api/alunos', async (req, res) => {
       });
     }
 
-    const novoAluno = {
-      id: `nak_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    let alunoCriado: any = null;
+
+    try {
+      alunoCriado = await insertDbAluno({
+        nome: String(nome),
+        telefone: String(telefone),
+        turma: String(turma),
+        prajed: prajed || 'Branco (Iniciante)',
+        origem: origem || 'Site NAK Entre Rios',
+        userId: userId || undefined,
+      });
+    } catch (sqlErr) {
+      console.error('Erro na inserção Cloud SQL, acionando gravação local:', sqlErr);
+    }
+
+    // Salva cópia local para garantia e resiliência
+    const localObj = alunoCriado || {
+      id: `local_${Date.now()}`,
       nome: String(nome).trim(),
       telefone: String(telefone).trim(),
       turma: String(turma).trim(),
       prajed: prajed || 'Branco (Iniciante)',
       origem: origem || 'Site NAK Entre Rios',
       status: 'pendente',
-      criado_em: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     };
 
-    // 1. Salva localmente para garantir que NENHUMA matrícula seja perdida
-    const alunos = getLocalAlunos();
-    alunos.unshift(novoAluno);
-    saveLocalAlunos(alunos);
-
-    // 2. Se o Supabase estiver configurado, tenta sincronizar
-    if (supabaseAdmin) {
-      try {
-        const { error } = await supabaseAdmin
-          .from('alunos')
-          .insert({
-            nome: novoAluno.nome,
-            telefone: novoAluno.telefone,
-            turma: novoAluno.turma,
-            prajed: novoAluno.prajed,
-            origem: novoAluno.origem,
-          });
-
-        if (error) {
-          console.warn('[Supabase Sync] Aviso ao sincronizar com Supabase:', error.message);
-        }
-      } catch (syncErr) {
-        console.warn('[Supabase Sync] Não foi possível alcançar o Supabase externo:', syncErr);
-      }
-    }
+    const locais = getLocalAlunos();
+    locais.unshift(localObj);
+    saveLocalAlunos(locais);
 
     return res.status(201).json({
       success: true,
       message: 'Matrícula realizada com sucesso!',
-      aluno: novoAluno,
+      aluno: localObj,
     });
   } catch (err: any) {
     console.error('Exceção ao matricular aluno:', err);
-    return res.status(500).json({ error: err.message || 'Erro interno do servidor' });
+    return res.status(500).json({ error: 'Erro ao processar matrícula' });
   }
 });
 
@@ -190,24 +190,24 @@ app.post('/api/alunos', async (req, res) => {
 app.delete('/api/alunos/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const numericId = parseInt(id, 10);
 
-    // Remove do armazenamento local
+    if (!isNaN(numericId)) {
+      try {
+        await deleteDbAluno(numericId);
+      } catch (sqlErr) {
+        console.error('Erro ao deletar no Cloud SQL:', sqlErr);
+      }
+    }
+
+    // Também limpa do armazenamento local
     const alunos = getLocalAlunos();
     const filtrados = alunos.filter((a) => String(a.id) !== String(id));
     saveLocalAlunos(filtrados);
 
-    // Se Supabase ativo, tenta excluir também
-    if (supabaseAdmin) {
-      try {
-        await supabaseAdmin.from('alunos').delete().eq('id', id);
-      } catch (e) {
-        console.warn('Aviso ao excluir do Supabase:', e);
-      }
-    }
-
     return res.json({ success: true, message: 'Aluno removido com sucesso.' });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message || 'Erro ao remover aluno' });
+    return res.status(500).json({ error: 'Erro ao remover aluno' });
   }
 });
 

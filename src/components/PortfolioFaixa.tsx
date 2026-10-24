@@ -144,17 +144,30 @@ export const PortfolioFaixa: React.FC = () => {
   return (
     <section 
       aria-label="Portfólio de Treinos e Resultados da NAK Entre Rios"
-      className="relative z-10 w-full py-4 sm:py-6 overflow-hidden select-none"
+      className="relative z-10 w-full pt-8 pb-10 sm:pt-10 sm:pb-12 overflow-hidden select-none border-t border-zinc-200/80"
     >
+      {/* Título da Faixa Contínua */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
+          <h3 className="font-['Teko'] text-2xl sm:text-3xl uppercase tracking-wider text-zinc-900 font-bold leading-none">
+            Momentos NAK Entre Rios • <span className="text-red-600">Treinos & Atletas</span>
+          </h3>
+        </div>
+        <p className="text-xs text-zinc-500 font-medium">
+          Passagem contínua de fotos reais • Clique em qualquer foto para ampliar
+        </p>
+      </div>
+
       {/* Máscara suave com gradiente na extremidade esquerda (acabamento premium) */}
       <div 
-        className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 sm:w-32 z-20 bg-gradient-to-r from-zinc-100 via-zinc-100/80 to-transparent" 
+        className="pointer-events-none absolute left-0 top-16 bottom-0 w-16 sm:w-32 z-20 bg-gradient-to-r from-zinc-100 via-zinc-100/80 to-transparent" 
         aria-hidden="true"
       />
 
       {/* Máscara suave com gradiente na extremidade direita (acabamento premium) */}
       <div 
-        className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 sm:w-32 z-20 bg-gradient-to-l from-zinc-100 via-zinc-100/80 to-transparent" 
+        className="pointer-events-none absolute right-0 top-16 bottom-0 w-16 sm:w-32 z-20 bg-gradient-to-l from-zinc-100 via-zinc-100/80 to-transparent" 
         aria-hidden="true"
       />
 

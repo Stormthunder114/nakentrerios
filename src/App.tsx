@@ -4,18 +4,26 @@ import { MatriculaModal } from './components/MatriculaModal';
 import { PortfolioFaixa } from './components/PortfolioFaixa';
 import { HistoriaMuayThai } from './components/HistoriaMuayThai';
 import { GaleriaFotos } from './components/GaleriaFotos';
+import { DownloadCloudflareModal } from './components/DownloadCloudflareModal';
 import type { TurmaId, Aluno } from './types';
+import { useAuth } from './lib/AuthContext.tsx';
 import { 
   ArrowRight,
   MessageCircle,
   ShieldCheck,
   Award,
-  Camera
+  Camera,
+  LogIn,
+  LogOut,
+  User as UserIcon,
+  Download
 } from 'lucide-react';
 
 export default function App() {
+  const { user, signInWithGoogle, signOut } = useAuth();
   const [selectedTurma, setSelectedTurma] = useState<TurmaId>('Manhã - 07:00');
   const [isMatriculaModalOpen, setIsMatriculaModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [ultimoMatriculado, setUltimoMatriculado] = useState<Aluno | null>(null);
 
   const handleMatriculaSucesso = (novoAluno: { nome: string; telefone: string; turma: string }) => {
@@ -58,6 +66,16 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setIsDownloadModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-[11px] sm:text-xs font-semibold shadow-sm transition hover:scale-105 active:scale-95 cursor-pointer"
+            title="Baixar arquivos para atualizar o site no Cloudflare"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Baixar Atualização</span>
+          </button>
+
           <a
             href="#secaoGaleria"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white border border-zinc-200 text-[11px] sm:text-xs text-zinc-800 font-semibold shadow-sm transition hover:scale-105 active:scale-95"
@@ -71,6 +89,42 @@ export default function App() {
             <span className="hidden xs:inline">Distrito de Entre Rios • Guarapuava - PR</span>
             <span className="inline xs:hidden">Entre Rios - PR</span>
           </div>
+
+          {user ? (
+            <div className="flex items-center gap-2 pl-1 border-l border-zinc-200">
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || 'Aluno'}
+                  className="w-7 h-7 rounded-full border border-zinc-300 object-cover"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold">
+                  {user.displayName?.[0] || 'A'}
+                </div>
+              )}
+              <span className="hidden sm:inline text-xs font-semibold text-zinc-800 max-w-[100px] truncate">
+                {user.displayName?.split(' ')[0] || 'Aluno'}
+              </span>
+              <button
+                type="button"
+                onClick={signOut}
+                title="Sair"
+                className="p-1 rounded-full text-zinc-400 hover:text-zinc-700 transition cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={signInWithGoogle}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-900 hover:bg-black text-white text-[11px] sm:text-xs font-semibold shadow-sm transition active:scale-95 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Entrar</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -137,18 +191,18 @@ export default function App() {
         </div>
       </main>
 
-      {/* Seção de Portfólio Visual / Esteira Contínua de Imagens */}
-      <PortfolioFaixa />
-
       {/* Componente de Galeria de Fotos Oficial com Efeito Lightbox */}
       <GaleriaFotos onMatriculaClick={() => setIsMatriculaModalOpen(true)} />
 
+      {/* Seção de Portfólio Visual / Esteira Contínua de Imagens Rolando no Final da Página */}
+      <PortfolioFaixa />
+
       {/* Footer Minimalista Neutro */}
-      <footer className="relative z-10 w-full px-4 sm:px-6 py-6 border-t border-zinc-200 text-center text-[11px] sm:text-xs text-zinc-500 font-medium space-y-2">
+      <footer className="relative z-10 w-full px-4 sm:px-6 py-6 border-t border-zinc-200 text-center text-[11px] sm:text-xs text-zinc-500 font-medium space-y-3">
         <p>
           © 2026 NAK Entre Rios • Muay Thai em Entre Rios, Guarapuava - PR • Prof. Jonatas Ramos
         </p>
-        <p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <a
             href="https://nakentrerios.online"
             target="_blank"
@@ -157,7 +211,16 @@ export default function App() {
           >
             nakentrerios.online
           </a>
-        </p>
+          <span className="text-zinc-300">•</span>
+          <button
+            type="button"
+            onClick={() => setIsDownloadModalOpen(true)}
+            className="inline-flex items-center gap-1.5 text-red-600 hover:text-red-700 font-semibold transition cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Baixar Arquivos para Cloudflare (.ZIP)</span>
+          </button>
+        </div>
       </footer>
 
       {/* Modal com Formulário Conectado ao Supabase */}
@@ -167,6 +230,12 @@ export default function App() {
         selectedTurma={selectedTurma}
         onTurmaChange={setSelectedTurma}
         onMatriculaSucesso={handleMatriculaSucesso}
+      />
+
+      {/* Modal para Baixar o Site Atualizado e Instruções do Cloudflare */}
+      <DownloadCloudflareModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
       />
 
       {/* Botão Flutuante do WhatsApp Responsivo */}
