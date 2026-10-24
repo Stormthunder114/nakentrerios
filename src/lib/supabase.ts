@@ -149,24 +149,4 @@ export async function excluirAluno(id: string | number) {
   }
 }
 
-  if (supabase) {
-    try {
-      await supabase.from('alunos').delete().eq('id', id);
-    } catch (err) {
-      console.warn('Erro ao excluir do Supabase direto:', err);
-    }
-  }
-
-  try {
-    const LOCAL_KEY = 'nak_alunos_registrados';
-    const locais = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-    const filtrados = locais.filter((a: any) => String(a.id) !== String(id));
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(filtrados));
-  } catch (e) {
-    console.warn('Erro ao excluir localmente:', e);
-  }
-
-  return { error: null };
-}
-
-
+  
