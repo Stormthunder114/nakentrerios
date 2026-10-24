@@ -119,14 +119,35 @@ export async function buscarAlunosRecentes() {
 }
 
 export async function excluirAluno(id: string | number) {
-  try {
-    const res = await fetch(`/api/alunos/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      return { error: null };
-    }
-  } catch (err) {
-    console.warn('Erro ao excluir via API:', err);
+  if (!id) {
+    return { error: new Error('ID do aluno não informado.') };
   }
+
+  try {
+    const resposta = await fetch(
+      `/api/alunos/${encodeURIComponent(String(id))}`,
+      { method: 'DELETE' }
+    );
+
+    const resultado = await resposta.json().catch(() => null);
+
+    if (!resposta.ok || resultado?.success !== true) {
+      return {
+        error: new Error(
+          resultado?.error || 'Não foi possível excluir o aluno.'
+        ),
+      };
+    }
+
+    return { error: null };
+  } catch (erro) {
+    return {
+      error: erro instanceof Error
+        ? erro
+        : new Error('Falha de comunicação com o servidor.'),
+    };
+  }
+}
 
   if (supabase) {
     try {
